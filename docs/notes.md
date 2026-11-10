@@ -50,3 +50,34 @@ Então, selecionei a opção **Build static binary (no shared libs)** e executei
 make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- -j$(nproc)
 file busybox
 ```
+# stage 2 — Customização
+
+- Hostname alterado para `maridev` (confirmado no prompt de login).
+- Senha de root configurada e login funcionando.
+- Pacote extra: [nano/htop/tree] instalado via `Target packages`, confirmado com
+    ``` # nano --version
+    GNU nano, version 8.2
+    Compiled options: --enable-tiny --disable-nls --disable-utf8 
+    ```
+- Aprendizado: o prompt `maridev login:` mostra o hostname, não o usuário. O login é feito com `root`.
+### Comandos utilizados
+- Comando configuração base: ```make qemu_riscv64_virt_defconfig```
+- Comando boot do QEMU: `qemu-system-riscv64 -M virt -nographic   -kernel arch/riscv/boot/Image   
+-append "console=ttyS0"`
+
+## Buildroot
+
+### Versão e Configuração
+- **Versão do Buildroot**: 2025.02.19 (LTS)
+- **Configuração base**: `qemu_riscv64_virt_defconfig`
+- **Customizações**: Hostname (`maridev`), senha de root e pacote `nano` (com otimização de tamanho).
+- **Defconfig salvo**: `etapa2-buildroot/configs/custom_config`
+
+### Comando de Boot no QEMU
+```bash
+qemu-system-riscv64 -M virt -nographic \
+  -bios output/images/fw_jump.bin \
+  -kernel output/images/Image \
+  -append "rootwait root=/dev/vda ro console=ttyS0" \
+  -drive file=output/images/rootfs.ext2,format=raw,if=virtio \
+  -netdev user,id=net0 -device virtio-net-device,netdev=net0

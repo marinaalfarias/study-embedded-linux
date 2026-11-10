@@ -1,0 +1,6 @@
+#!/bin/busybox sh
+/bin/busybox mount -t proc none /proc
+/bin/busybox mount -t sysfs none /sys
+/bin/busybox mount -t devtmpfs none /dev
+echo "Initramfs OK. PID: $$"
+exec /bin/busybox sh </dev/console >/dev/console 2>&1
