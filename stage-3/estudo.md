@@ -197,3 +197,4 @@ o arquivo `libfoo.mk` descreve como o pacote deve ser baixado, configurado, buil
 - **makefiles para autottools-based software**: deve ser usados para novos pacotes que se baseiem no autotools como seu sistema de build
 - **makefiles para cmake-based software**: deve ser usados para novos pacotes que se baseiem em CMake
 #### arquivo .hash
+adicionar um terceiro arquivo `libfoo.hash`, que vai conter os hashes dos arquivos baixados para o pacote da biblioteca.
