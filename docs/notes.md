@@ -82,3 +82,59 @@ qemu-system-riscv64 -M virt -nographic \
   -drive file=output/images/rootfs.ext2,format=raw,if=virtio \
   -netdev user,id=net0 -device virtio-net-device,netdev=net0
 ```
+
+# Estudo Dirigido: Linux Embarcado em RISC-V
+
+Este repositório documenta a construção de um sistema Linux embarcado para RISC-V, desde um "Hello World" até uma aplicação customizada rodando no emulador QEMU.
+
+## Visão Geral do Projeto
+
+O projeto foi dividido em três etapas principais, seguindo o roteiro do guia:
+
+### Etapa 0: Ambiente e Hello World
+- **Objetivo**: Configurar o ambiente de compilação cruzada e executar um binário RISC-V simples.
+- **O que foi feito**:
+  - Instalação do compilador cruzado (`gcc-riscv64-linux-gnu`) e do QEMU (`qemu-user` e `qemu-system-misc`).
+  - Criação de um `hello.c` e compilação estática com `-static`.
+  - Execução no QEMU em modo *user* (`qemu-riscv64 ./hello`).
+- **Conceito chave**: Diferença entre `qemu-riscv64` (emula apenas a CPU para um programa) e `qemu-system-riscv64` (emula uma máquina completa para um kernel).
+
+### Etapa 1: Linux Mínimo Feito à Mão
+- **Objetivo**: Construir manualmente um kernel Linux + initramfs para entender o papel de cada componente.
+- **O que foi feito**:
+  - Compilação do kernel Linux (versão longterm, ex: 6.18) com `ARCH=riscv`.
+  - Boot sem rootfs para observar o kernel panic (`VFS: Unable to mount root fs`).
+  - Compilação do BusyBox estático e criação de um initramfs no formato `cpio` (`newc`).
+  - Criação do script `/init` (PID 1) que monta `/proc`, `/sys`, `/dev` e executa o shell.
+  - Boot completo até o shell.
+- **Conceito chave**: O kernel não sabe o que fazer sem um rootfs; o BusyBox fornece os utilitários; o `/init` é o primeiro processo em espaço de usuário.
+
+### Etapa 2: Buildroot (Automação)
+- **Objetivo**: Gerar a mesma imagem (ou melhor) usando o Buildroot, automatizando a compilação do kernel, toolchain, BusyBox e rootfs.
+- **O que foi feito**:
+  - Utilização do Buildroot 2025.02 (LTS) com `qemu_riscv64_virt_defconfig`.
+  - Customização via `menuconfig`: hostname (`maridev`), senha de root e instalação do pacote `nano`.
+  - Criação de um build "limpo" (`build-limpo`) usando o modo *out-of-tree* (`O=`) para garantir a reprodutibilidade.
+  - Comparação: o Buildroot automatizou a toolchain, o OpenSBI (`fw_jump.bin`), o kernel e o rootfs (`rootfs.ext2`), que antes foram feitos manualmente.
+- **Conceito chave**: O Buildroot é um sistema de build que resolve dependências e gera uma imagem completa, ideal para projetos embarcados.
+
+### Etapa 3: Sua Aplicação na Imagem
+- **Objetivo**: Adicionar uma aplicação customizada (um contador em C) na imagem, fazê-la iniciar no boot e depurá-la.
+- **O que foi feito**:
+  - Criação de uma árvore externa (`br2-external`) para não modificar o código-fonte do Buildroot.
+  - Escrita do pacote `contador` (com `Config.in` e `contador.mk`) usando `SITE_METHOD = local`.
+  - Criação do script `S99contador` para iniciar a aplicação via BusyBox init.
+  - Compilação e instalação do pacote na imagem final.
+  - **Limitação**: O GDB do host não compilou (incompatibilidade com GCC 15) e o `gdbserver` não é suportado para RISC-V no Buildroot. A depuração foi feita localmente (ou documentada como limitação).
+
+## Estrutura do Repositório
+
+- `third-party/`: Fontes baixadas (Buildroot, kernel, BusyBox) - **não versionado**.
+- `br2-external/`: Pacote `contador` e customizações do projeto (versionado).
+- `build-limpo/`: Diretório de build do Buildroot (gerado, não versionado).
+- `docs/`: Documentação (este arquivo, troubleshooting, etc.).
+- `scripts/`: Scripts auxiliares (build, run-qemu).
+
+## Como Reproduzir
+
+Consulte o arquivo `REPLICAR.md` para o passo a passo de como gerar a imagem do zero.
