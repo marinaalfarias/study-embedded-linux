@@ -1,4 +1,4 @@
 config BR2_PACKAGE_CONTADOR
     bool "contador"
     help
-      Aplicação contador simples para RISC-V.
+      Contador simples para RISC-V

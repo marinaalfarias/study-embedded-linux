@@ -1,1 +1,1 @@
-source "$BR2_EXTERNAL_BAR_42_PATH/package/contador/Config.in"
+source "$BR2_EXTERNAL_CONTADOR_PATH/package/contador/Config.in"

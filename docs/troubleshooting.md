@@ -31,3 +31,18 @@ A janela do terminal é menor que o tamanho mínimo exigido pela interface do Bu
 
 ### Solução
 Aumentar a janela do terminal ou maximizá-la. O `menuconfig` abre normalmente.
+
+
+## Erro: Falha na compilação do GDB (host-gdb-15.2) no Buildroot 2025.02
+
+### Sintoma
+Ao compilar o Buildroot com `BR2_PACKAGE_HOST_GDB` habilitado, o processo falha durante a compilação do pacote `host-gdb-15.2`, terminando com `Error 2` e a mensagem `libbfd.la` ou similar.
+
+### Causa Raiz
+Incompatibilidade entre o código-fonte do GDB 15.2 (que traz uma cópia interna da biblioteca `readline`) e o GCC 15.x, que é o compilador padrão em versões recentes do Ubuntu. O GCC 15 usa o padrão C23 por padrão, que altera a interpretação de declarações de funções antigas como `int tputs()`, fazendo com que a compilação do `readline` interno falhe com um erro do tipo `too many arguments to function 'tputs'` [citation:1][citation:5].
+
+### Solução Adotada
+Como a correção oficial do Buildroot (que envolve fazer o GDB usar o `readline` externo) ainda não estava presente na versão 2025.02 utilizada, a solução mais prática foi **desabilitar a opção `BR2_PACKAGE_HOST_GDB` no `menuconfig`**. Isso permitiu que o restante da imagem (kernel, BusyBox, aplicação contador) fosse compilado com sucesso.
+
+### Observação para a Etapa 3
+O Buildroot **não suporta `gdbserver` para a arquitetura RISC-V** [citation:13]. Portanto, a depuração remota (host GDB + gdbserver no target) não é possível nesta configuração. A depuração da aplicação contador precisará ser feita de forma **local**, rodando o GDB dentro do próprio ambiente QEMU.
